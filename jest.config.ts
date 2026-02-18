@@ -3,7 +3,7 @@ export default {
   testEnvironment: "jest-environment-jsdom",
   moduleNameMapper: {
     "\\.(css|less|scss|sass)$": "identity-obj-proxy",
-    "\\.(gif|ttf|eot|svg|png)$": "<rootDir>/test/__mocks__/fileMock.js",
+  "\\.(gif|ttf|eot|svg|png|webp|jpg|jpeg)$": "<rootDir>/test/__mocks__/fileMock.js",
     "^html2pdf.js$": "<rootDir>/src/test-utils/__mocks__/html2pdf.js",
     "^html2canvas$": "<rootDir>/src/test-utils/__mocks__/html2canvas.js",
   },

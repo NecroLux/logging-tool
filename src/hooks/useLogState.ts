@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 type DiveEntry = {
   ourTeam: "Athena" | "Reaper";
@@ -8,7 +8,9 @@ type DiveEntry = {
 };
 
 export type LogMode = "patrol" | "skirmish";
-export type ShipType = "valhalla" | "fenrir" | "tyr" | "odin";
+export type ShipType = "Gullinbursti" | "Jormungandr" | "Freyr" | "Gjallarhorn" | "Odin" | "Skadi" | "Nott" | "Hodr" | "Audacious" | "Berserker" | "Bestla" | "Ragnarok" | "Thor" | "Titan" | "Tyr" | "Valhalla";
+
+export const RETIRED_SHIPS: ShipType[] = ["Jormungandr", "Odin", "Freyr", "Audacious", "Berserker", "Bestla", "Ragnarok", "Thor", "Titan", "Tyr", "Valhalla"];
 
 export function useLogState() {
   // Mode and basic fields
@@ -17,13 +19,15 @@ export function useLogState() {
   const [body, setBody] = useState("");
   const [signature, setSignature] = useState("");
   const [subtitle, setSubtitle] = useState("");
-  const [selectedShip, setSelectedShip] = useState<ShipType>("audacious");
+  const [selectedShip, setSelectedShip] = useState<ShipType>("Gullinbursti");
 
   // Patrol-specific fields
   const [events, setEvents] = useState("");
   const [crew, setCrew] = useState("");
   const [gold, setGold] = useState("");
   const [doubloons, setDoubloons] = useState("");
+  const [startgold, setStartgold] = useState("");
+  const [endgold, setEndgold] = useState("");
 
   // Skirmish-specific fields
   const [ourTeam, setOurTeam] = useState<"Athena" | "Reaper">("Athena");
@@ -34,14 +38,21 @@ export function useLogState() {
   const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
 
   // Font choices
-  const [titleFont, setTitleFont] = useState("Satisfy");
-  const [bodyFont, setBodyFont] = useState("Indie_Flower");
+  const [titleFont, setTitleFont] = useState("Charm");
+  const [bodyFont, setBodyFont] = useState("Charm");
 
-  // For tabbing between preview pages
-  const [activePageIndex, setActivePageIndex] = useState(0);
+  // Parchment selector (1-5)
+  const [parchment, setParchment] = useState<number>(1);
 
-  // We'll split body text into multiple pages (for the big "body" only)
-  const [pages, setPages] = useState<string[]>([]);
+  // Frame selector (0 for none, 1-5)
+  const [frame, setFrame] = useState<number>(1);
+
+  // Add this state to track the voyage number
+  const [voyageNumber, setVoyageNumber] = useState("");
+
+  // Add these state declarations near the gold/doubloons states:
+  const [ancientCoins, setAncientCoins] = useState("");
+  const [fishCaught, setFishCaught] = useState("");
 
   // -----------------------------------
   // Load from localStorage on mount
@@ -49,34 +60,29 @@ export function useLogState() {
   useEffect(() => {
     const savedMode = localStorage.getItem("mode");
     if (savedMode) setMode(savedMode as LogMode);
+    const savedVoyageNumber = localStorage.getItem("voyageNumber");
+    if (savedVoyageNumber) setVoyageNumber(savedVoyageNumber);
+    const savedAncientCoins = localStorage.getItem("ancientCoins");
+    if (savedAncientCoins) setAncientCoins(savedAncientCoins);
+    const savedFishCaught = localStorage.getItem("fishCaught");
+    if (savedFishCaught) setFishCaught(savedFishCaught);
+    const savedParchment = localStorage.getItem("parchment");
+    if (savedParchment) setParchment(Number(savedParchment) || 1);
+    const savedFrame = localStorage.getItem("frame");
+    if (savedFrame) setFrame(Number(savedFrame) || 0);
+  }, []);
 
-    const savedTitle = localStorage.getItem("title");
-    const savedBody = localStorage.getItem("body");
-    const savedSignature = localStorage.getItem("signature");
-    const savedSubtitle = localStorage.getItem("subtitle");
-    const savedEvents = localStorage.getItem("events");
-    const savedCrew = localStorage.getItem("crew");
-    const savedGold = localStorage.getItem("gold");
-    const savedDoubloons = localStorage.getItem("doubloons");
-    const savedOurTeam = localStorage.getItem("ourTeam");
-    const savedDives = localStorage.getItem("dives");
-    const savedSelectedShip = localStorage.getItem("selectedShip");
-    const savedTitleFont = localStorage.getItem("titleFont");
-    const savedBodyFont = localStorage.getItem("bodyFont");
-
-    if (savedTitle) setTitle(savedTitle);
-    if (savedBody) setBody(savedBody);
-    if (savedSignature) setSignature(savedSignature);
-    if (savedSubtitle) setSubtitle(savedSubtitle);
-    if (savedEvents) setEvents(savedEvents);
-    if (savedCrew) setCrew(savedCrew);
-    if (savedGold) setGold(savedGold);
-    if (savedDoubloons) setDoubloons(savedDoubloons);
-    if (savedOurTeam) setOurTeam(savedOurTeam as "Athena" | "Reaper");
-    if (savedDives) setDives(JSON.parse(savedDives));
-    if (savedSelectedShip) setSelectedShip(savedSelectedShip as ShipType);
-    if (savedTitleFont) setTitleFont(savedTitleFont);
-    if (savedBodyFont) setBodyFont(savedBodyFont);
+  // Initialize crew with one empty entry if none exists
+  useEffect(() => {
+    if (crew === "") {
+      setCrew(JSON.stringify([{
+        id: String(Date.now()),
+        name: "",
+        discord: "",
+        rank: "",
+        role: ""
+      }]));
+    }
   }, []);
 
   // Helper: Debounce calls to localStorage
@@ -95,7 +101,8 @@ export function useLogState() {
   useEffect(() => {
     const saveToLocalStorage = () => {
       localStorage.setItem("mode", mode);
-      localStorage.setItem("title", title);
+      // DELETE THIS LINE:
+      // localStorage.setItem("title", title);
       localStorage.setItem("body", body);
       localStorage.setItem("signature", signature);
       localStorage.setItem("subtitle", subtitle);
@@ -108,12 +115,20 @@ export function useLogState() {
       localStorage.setItem("selectedShip", selectedShip);
       localStorage.setItem("titleFont", titleFont);
       localStorage.setItem("bodyFont", bodyFont);
+  // save parchment
+  localStorage.setItem("parchment", String(parchment));
+      // save frame
+      localStorage.setItem("frame", String(frame));
+      localStorage.setItem("voyageNumber", voyageNumber);
+      // Add to localStorage save section:
+      localStorage.setItem("ancientCoins", ancientCoins);
+      localStorage.setItem("fishCaught", fishCaught);
     };
     const debouncedSave = debounce(saveToLocalStorage, 500);
     debouncedSave();
   }, [
     mode,
-    title,
+    // DELETE: title,
     body,
     signature,
     subtitle,
@@ -126,67 +141,12 @@ export function useLogState() {
     selectedShip,
     titleFont,
     bodyFont,
+    voyageNumber,
+    ancientCoins,
+    fishCaught,
+    parchment,
+    frame,
   ]);
-
-  // Pagination logic
-  const WRITING_AREA_HEIGHT = 982; // pixels
-  const LINE_HEIGHT = 24; // approximate line height
-  const LINES_PER_PAGE = Math.floor(WRITING_AREA_HEIGHT / LINE_HEIGHT);
-  const CHARS_PER_LINE = 70; // approx chars per line
-  const CHARS_PER_PAGE = LINES_PER_PAGE * CHARS_PER_LINE;
-
-  function splitTextIntoPages(longText: string): string[] {
-    if (!longText) return [""];
-
-    const pagesArr: string[] = [];
-    const lines = longText.split("\n");
-    let currentPage = "";
-    let currentHeight = 0;
-
-    for (const line of lines) {
-      const lineLength = line.length;
-      const wrappedLines = Math.ceil(lineLength / CHARS_PER_LINE);
-      const linePixelHeight = wrappedLines * LINE_HEIGHT;
-
-      if (currentHeight + linePixelHeight > WRITING_AREA_HEIGHT) {
-        pagesArr.push(currentPage);
-        currentPage = line;
-        currentHeight = linePixelHeight;
-      } else {
-        if (currentPage) {
-          currentPage += "\n";
-          currentHeight += LINE_HEIGHT;
-        }
-        currentPage += line;
-        currentHeight += linePixelHeight;
-      }
-
-      if (lineLength > CHARS_PER_PAGE) {
-        let remainingText = line;
-        while (remainingText.length > CHARS_PER_PAGE) {
-          const chunk = remainingText.slice(0, CHARS_PER_PAGE);
-          pagesArr.push(chunk);
-          remainingText = remainingText.slice(CHARS_PER_PAGE);
-        }
-        currentPage = remainingText;
-        currentHeight =
-          Math.ceil(remainingText.length / CHARS_PER_LINE) * LINE_HEIGHT;
-      }
-    }
-
-    if (currentPage) {
-      pagesArr.push(currentPage);
-    }
-
-    return pagesArr;
-  }
-
-  // Whenever 'body' changes, recalc pages
-  useEffect(() => {
-    const splitted = splitTextIntoPages(body);
-    setPages(splitted);
-    setActivePageIndex(splitted.length - 1); // jump to last page
-  }, [body]);
 
   // Skirmish dive management
   const addNewDive = () => {
@@ -209,7 +169,7 @@ export function useLogState() {
 
   // Reset all state
   const resetState = () => {
-    setTitle("");
+    setTitle("Log Title");
     setBody("");
     setSignature("");
     setSubtitle("");
@@ -219,41 +179,16 @@ export function useLogState() {
     setDoubloons("");
     setOurTeam("Athena");
     setDives([]);
-    setActivePageIndex(0);
-  };
-
-  // Load testing data
-  const loadTestingData = () => {
-    if (mode === "patrol") {
-      setTitle("Test Patrol Title");
-      setBody("Sample patrol log entry...");
-      setSignature("Capt. Test");
-      setEvents("Event 1\nEvent 2\nEvent 3");
-      setCrew("Crew 1\nCrew 2\nCrew 3");
-      setGold("1000");
-      setDoubloons("300");
-      setSubtitle("Test Subtitle");
-    } else {
-      setTitle("Test Skirmish Title");
-      setBody("Skirmish details here...");
-      setSignature("Capt. Test");
-      setOurTeam("Athena");
-      setDives([
-        {
-          ourTeam: "Athena",
-          enemyTeam: "Reaper",
-          outcome: "loss",
-          notes: "Stamp Leader, they had 10 flags...",
-        },
-        {
-          ourTeam: "Athena",
-          enemyTeam: "Reaper",
-          outcome: "win",
-          notes: "Second match, big win",
-        },
-      ]);
-      setSubtitle("Skirmish Leader");
-    }
+    setVoyageNumber(""); // Add this line
+    setAncientCoins("");
+    setFishCaught("");
+    setStartgold("");
+    setEndgold("");
+    setSelectedShip("Gullinbursti"); // Add this line too
+    setTitleFont("Felipa");
+    setBodyFont("Jim Nightshade");
+    setParchment(1);
+    setFrame(1);
   };
 
   // Format list helper
@@ -262,127 +197,289 @@ export function useLogState() {
     return text.split("\n").filter((item) => item.trim() !== "");
   };
 
+  // Add this helper function before the formatDiscordMessage function
+  const getOrdinal = (num: string) => {
+    const n = Number(num);
+    if (!Number.isFinite(n) || n === 0) return "nth";
+    const rem100 = n % 100;
+    if (rem100 >= 11 && rem100 <= 13) return `${n}th`;
+    const rem10 = n % 10;
+    if (rem10 === 1) return `${n}st`;
+    if (rem10 === 2) return `${n}nd`;
+    if (rem10 === 3) return `${n}rd`;
+    return `${n}th`;
+  };
+
   // Discord message formatting
   const formatDiscordMessage = () => {
-    // Common sections that appear in both modes
-    const formatCommonSections = () => {
-      const sections = [
-        title || "Title here",
-        "",
-        body ||
-          (mode === "patrol" ? "Patrol details here" : "Skirmish details here"),
-        "",
-      ];
-      return sections.join("\n");
+    let crewList: { id: string; name: string; discord: string; rank: string; role: string; isRep?: boolean }[] = [];
+    try {
+      crewList = JSON.parse(crew || "[]");
+    } catch {
+      crewList = [];
+    }
+
+    // Find the host crew member by signature (which is now the ID)
+    const hostCrew = crewList.find(c => c.id === signature);
+    const hostDiscordId = hostCrew?.discord || "000000000000000000";
+
+    const rankOrder = [
+      "Recruit",
+      "Seaman",
+      "Marine",
+      "Lance Corporal",
+      "Able Seaman",
+      "Corporal",
+      "Junior Petty Officer",
+      "Staff Sergeant",
+      "Petty Officer",
+      "Gunnery Sergeant",
+      "Chief Petty Officer",
+      "Master Sergeant",
+      "Senior Chief Petty Officer",
+      "Second Lieutenant",
+      "Midshipman",
+      "Marine Captain",
+      "Lieutenant",
+      "Major",
+      "Lieutenant Commander",
+      "Lieutenant Colonel",
+      "Commander",
+      "Colonel",
+      "Captain",
+      "Brigadier General",
+      "Commodore",
+      "Major General",
+      "Rear Admiral",
+      "Vice Admiral",
+      "Admiral",
+    ];
+
+    crewList.sort((a, b) => {
+      const aIdx = rankOrder.indexOf(a.rank);
+      const bIdx = rankOrder.indexOf(b.rank);
+      return bIdx - aIdx; // highest rank first
+    });
+
+    const roleEmojis: Record<string, string> = {
+      Helm: ":Wheel:",
+      Cannons: ":Cannon:",
+      Carpenter: ":Planks:",
+      Flex: ":SwordFight:",
     };
 
-    // Format the signature block that appears at the end
-    const formatSignature = () => {
-      const sections = [
-        "",
-        "Signed:",
-        signature || "Your Signature",
-        subtitle || "",
-      ].filter(Boolean);
-      return sections.join("\n");
+    const crewLines = crewList
+      .filter(c => c.discord && c.role)
+      .map((c) => {
+        const emoji = roleEmojis[c.role] || "";
+        const repTag = c.isRep ? " [REP]" : "";
+        return `<@${c.discord}> - ${c.role} ${emoji}${repTag}`.trim();
+      })
+      .join("\n");
+
+    const eventLines = (events || "")
+      .split("\n")
+      .filter(Boolean)
+      .join("\n");
+
+    const auxiliaryText = selectedShip === "Gullinbursti" 
+      ? "" 
+      : ", auxiliary to the USS Gullinbursti";
+
+    const voyageText = voyageNumber ? getOrdinal(voyageNumber) : "nth";
+
+    if (mode === "patrol") {
+      const lootLines = [];
+      lootLines.push(`:Gold: Gold: ${gold || "0"}`);
+      lootLines.push(`:Doubloons: Doubloons: ${doubloons || "0"}`);
+      
+      if (ancientCoins && parseInt(ancientCoins) > 0) {
+        lootLines.push(`:AncientCoin: Ancient Coins: ${ancientCoins}`);
+      }
+      
+      if (fishCaught && parseInt(fishCaught) > 0) {
+        lootLines.push(`:fish: Fish: ${fishCaught}`);
+      }
+
+      return `<@${hostDiscordId}>'s log of the ${voyageText} voyage (Patrol) aboard the USS ${selectedShip}${auxiliaryText}.
+
+**Entry Log**
+${body || ""}
+
+**Loot Confiscated:**
+${lootLines.join('\n')}
+
+**Events:**
+${eventLines || "None"}
+
+**Crew:**
+${crewLines || "No crew assigned"}
+
+:Gullinbursti: Charging Forth, Radiant and Unyielding :Gullinbursti:`;
+    } else {
+      const diveLines = dives.length
+        ? dives
+            .map((d, i) => {
+              return `${i + 1}. ${d.ourTeam} vs ${d.enemyTeam} (${d.outcome})${d.notes ? ` - ${d.notes}` : ""}`;
+            })
+            .join("\n")
+        : "No dives recorded";
+
+      return `<@${hostDiscordId}>'s log of the ${voyageText} voyage (Skirmish) aboard the USS ${selectedShip}${auxiliaryText}.
+
+**Entry Log**
+${body || ""}
+
+**Team:** ${ourTeam}
+
+**Crew:**
+${crewLines || "No crew assigned"}
+
+**Dives:**
+${diveLines}
+
+:Gullinbursti: Charging Forth, Radiant and Unyielding :Gullinbursti:`;
+    }
+  };
+
+  // For tracking whether gold was last set by the auto-compute
+  const computedGoldRef = useRef<string | null>(null);
+
+  // Auto-calc gold = endgold - startgold but don't override manual edits
+  useEffect(() => {
+    const parseAmount = (v: string) => {
+      if (!v) return 0;
+      const n = parseFloat(v.replace(/[^0-9.-]/g, ""));
+      return Number.isFinite(n) ? n : 0;
     };
 
-    // Format patrol-specific content
-    const formatPatrolContent = () => {
-      const sections = [
-        "Events:",
-        events || "N/A",
-        "",
-        `Gold: ${gold || "0"}`,
-        `Doubloons: ${doubloons || "0"}`,
-        "",
-        "Crew:",
-        crew || "N/A",
-      ];
-      return sections.join("\n");
-    };
+    const start = parseAmount(startgold);
+    const end = parseAmount(endgold);
+    const diff = end - start;
+    const diffStr = diff ? String(diff) : "";
 
-    // Format skirmish-specific content
-    const formatSkirmishContent = () => {
-      const formatTeamEmoji = (team: "Athena" | "Reaper") =>
-        `${team} ${team === "Athena" ? ":Athena:" : ":Reaper:"}`;
+    // only update when gold is empty or was last set by this auto-compute
+    if (gold === "" || computedGoldRef.current === gold) {
+      setGold(diffStr);
+      computedGoldRef.current = diffStr;
+    }
+  }, [startgold, endgold]);
 
-      const formatDive = (dive: DiveEntry, index: number) => {
-        const vs = `${formatTeamEmoji(dive.ourTeam)} vs. ${formatTeamEmoji(
-          dive.enemyTeam
-        )}`;
-        const notes = dive.notes ? ` - ${dive.notes}` : "";
-        return `${index + 1}. ${vs} [${dive.outcome}]${notes}`;
-      };
+  // Add this function back to useLogState:
 
-      const sections = [
-        `Team: ${ourTeam || "Athena"}`,
-        "",
-        "Dives:",
-        dives.length
-          ? dives.map((d, i) => formatDive(d, i)).join("\n")
-          : "No dives yet",
-      ];
-      return sections.join("\n");
-    };
+  const loadTestingData = () => {
+    const testCrew = [
+      { id: "1", name: "John Blackhook", discord: "123456789", rank: "Admiral", role: "Helm", isRep: false },
+      { id: "2", name: "Ruper Ironside", discord: "234567890", rank: "Captain", role: "Cannons", isRep: false },
+      { id: "3", name: "Dirk Wavecrest", discord: "345678901", rank: "Lieutenant", role: "Carpenter", isRep: false },
+      { id: "4", name: "Jorg Stormbreaker", discord: "456789012", rank: "Seaman", role: "Flex", isRep: false },
+      { id: "5", name: "Erik Saltbeard", discord: "567890123", rank: "Marine", role: "Helm", isRep: true },
+    ];
 
-    // Combine all sections based on mode
-    const content = [
-      formatCommonSections(),
-      mode === "patrol" ? formatPatrolContent() : formatSkirmishContent(),
-      formatSignature(),
-    ].join("\n");
+    if (mode === "patrol") {
+      setVoyageNumber("5");
+      setBody("Set sail at dawn under favorable winds. Encountered three merchant vessels and one skeleton galleon. All encounters resolved favorably. Crew performed excellently throughout the expedition. Returned to port with full holds and morale high.");
+      // signature should reference the crew id (not the discord id)
+      setSignature(testCrew[0].id);
+      setEvents("Merchant Vessel Encountered\nSkeleton Galleon Vanquished\nKraken Tentacle Spotted\nLegendary Treasure Map Found");
+      setGold("5,250");
+      setDoubloons("180");
+      setStartgold("1,000");
+      setEndgold("6,250");
+      setAncientCoins("25");
+      setFishCaught("12");
+    } else {
+      setVoyageNumber("3");
+      setBody("Competed in intense skirmish battles against rival crews. Team displayed exceptional coordination and tactical prowess. Multiple close matches showcased the skill of our sailors.");
+      setSignature(testCrew[0].id);
+      setOurTeam("Athena");
+      setDives([
+        {
+          ourTeam: "Athena",
+          enemyTeam: "Reaper",
+          outcome: "win",
+          notes: "Superior cannon work and smart positioning",
+        },
+        {
+          ourTeam: "Athena",
+          enemyTeam: "Reaper",
+          outcome: "loss",
+          notes: "Caught off guard by their anchor strategy",
+        },
+        {
+          ourTeam: "Athena",
+          enemyTeam: "Reaper",
+          outcome: "win",
+          notes: "Excellent teamwork, clean victory",
+        },
+      ]);
+    }
 
-    return content.trim();
+    // Set crew data and force a re-sync
+    setCrew(JSON.stringify(testCrew));
+    
+    // Small delay to ensure the Editor's useEffect picks up the change
+    setTimeout(() => {
+      setCrew("[]"); // Clear first
+      setTimeout(() => {
+        setCrew(JSON.stringify(testCrew)); // Then set testing data
+      }, 10);
+    }, 10);
   };
 
   return {
-    // State
     mode,
-    title,
-    body,
-    signature,
-    subtitle,
-    selectedShip,
-    events,
-    crew,
-    gold,
-    doubloons,
-    ourTeam,
-    dives,
-    isModalOpen,
-    isCopyModalOpen,
-    titleFont,
-    bodyFont,
-    activePageIndex,
-    pages,
-
-    // Setters
     setMode,
-    setTitle,
-    setBody,
-    setSignature,
-    setSubtitle,
+    selectedShip,
     setSelectedShip,
+    events,
     setEvents,
+    crew,
     setCrew,
+    gold,
     setGold,
+    doubloons,
     setDoubloons,
+    startgold,
+    setStartgold,
+    endgold,
+    setEndgold,
+    signature,
+    setSignature,
+    subtitle,
+    setSubtitle,
+    title,
+    setTitle,
+    ourTeam,
     setOurTeam,
-    setDives,
-    setIsModalOpen,
-    setIsCopyModalOpen,
+    body,
+    setBody,
+    titleFont,
     setTitleFont,
+    bodyFont,
     setBodyFont,
-    setActivePageIndex,
-
-    // Actions
-    addNewDive,
+    formatList,
+    voyageNumber,
+    setVoyageNumber,
+    formatDiscordMessage,
+    isModalOpen,
+    setIsModalOpen,
+    isCopyModalOpen,
+    setIsCopyModalOpen,
+    // Add to return object:
+    ancientCoins,
+    setAncientCoins,
+    fishCaught,
+    setFishCaught,
+    parchment,
+    setParchment,
+    frame,
+    setFrame,
+    dives,
     updateDive,
     removeDive,
+    addNewDive,
     resetState,
     loadTestingData,
-    formatList,
-    formatDiscordMessage,
   };
 }

@@ -1,16 +1,12 @@
-import React from "react";
 import "@testing-library/jest-dom";
 import { render, screen, within } from "../test-utils/test-utils";
-import userEvent from "@testing-library/user-event";
 import { Editor } from "./Editor";
 import { LogPreview } from "./LogPreview";
 
 describe("Editor and Preview Integration", () => {
   it("updates preview when editing in Patrol mode", async () => {
-    const user = userEvent.setup();
-
     // Render both components within the test-utils wrapper (which includes LogProvider)
-    render(
+    const { user } = render(
       <>
         <Editor />
         <LogPreview />
@@ -90,9 +86,7 @@ describe("Editor and Preview Integration", () => {
   });
 
   it("handles ship selection in Patrol mode", async () => {
-    const user = userEvent.setup();
-
-    render(
+    const { user } = render(
       <>
         <Editor />
         <LogPreview />
@@ -101,21 +95,19 @@ describe("Editor and Preview Integration", () => {
 
     // Find the ship select by its ID
     const shipSelect = screen.getByRole("combobox", { name: /select ship/i });
-    await user.selectOptions(shipSelect, "tyr");
+    await user.selectOptions(shipSelect, "Gullinbursti");
 
     // Verify the ship image changes in the preview
     const previewSection = screen.getByTestId("log-preview");
     const shipImage = within(previewSection).getByAltText("Ship Logo");
     expect(shipImage).toHaveAttribute(
       "src",
-      expect.stringContaining("tyr.png")
+      expect.stringContaining("gullinbursti.png")
     );
   });
 
   it("resets form when clicking reset button", async () => {
-    const user = userEvent.setup();
-
-    render(
+    const { user } = render(
       <>
         <Editor />
         <LogPreview />

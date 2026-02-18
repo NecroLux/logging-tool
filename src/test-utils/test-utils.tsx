@@ -1,5 +1,5 @@
 import React from "react";
-import { render, RenderOptions } from "@testing-library/react";
+import { render, RenderOptions, screen, within } from "@testing-library/react";
 import { LogProvider } from "../context/LogContext";
 import userEvent from "@testing-library/user-event";
 
@@ -18,8 +18,11 @@ const customRender = (
   };
 };
 
-// Re-export everything
-export * from "@testing-library/react";
+// Re-export selected helpers to ensure TypeScript sees named exports
+export { screen, within };
+
+// Also export userEvent setup helper
+export { default as userEvent } from "@testing-library/user-event";
 
 // Override render method
 export { customRender as render };

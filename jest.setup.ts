@@ -18,3 +18,6 @@ beforeAll(() => {
 afterAll(() => {
   console.error = originalError;
 });
+
+// Provide a default BASE_URL for tests (so components that rely on a base path can use it)
+(globalThis as any).__BASE_URL__ = "/";

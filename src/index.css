@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Jim+Nightshade&family=Charm&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -6,4 +8,14 @@ body {
   margin: 0;
   padding: 0;
   background: #1a1a1a;
+}
+
+/* Utility for using Jim Nightshade where explicitly needed (does not change app defaults) */
+.font-jim-nightshade {
+  font-family: 'Jim Nightshade', cursive;
+}
+
+/* Utility for using Charm where explicitly needed */
+.font-charm {
+  font-family: 'Charm', cursive;
 }

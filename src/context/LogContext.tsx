@@ -1,7 +1,14 @@
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext, useState } from "react";
 import { useLogState } from "../hooks/useLogState";
 import { useExport } from "../hooks/useExport";
 import { ShipType } from "../hooks/useLogState";
+
+interface DiveEntry {
+  ourTeam: "Athena" | "Reaper";
+  enemyTeam: "Athena" | "Reaper";
+  outcome: "win" | "loss";
+  notes?: string;
+}
 
 interface LogContextType {
   // State
@@ -11,23 +18,25 @@ interface LogContextType {
   signature: string;
   subtitle: string;
   selectedShip: ShipType;
+  voyageNumber: string;
   events: string;
   crew: string;
   gold: string;
   doubloons: string;
+  startgold: string;
+  endgold: string;
   ourTeam: "Athena" | "Reaper";
-  dives: Array<{
-    ourTeam: "Athena" | "Reaper";
-    enemyTeam: "Athena" | "Reaper";
-    outcome: "win" | "loss";
-    notes?: string;
-  }>;
+  dives: DiveEntry[];
+  ancientCoins: string;
+  fishCaught: string;
+  parchment: number;
+  setParchment: React.Dispatch<React.SetStateAction<number>>;
+  frame: number;
+  setFrame: React.Dispatch<React.SetStateAction<number>>;
   isModalOpen: boolean;
   isCopyModalOpen: boolean;
   titleFont: string;
   bodyFont: string;
-  activePageIndex: number;
-  pages: string[];
 
   // Setters
   setMode: (mode: "patrol" | "skirmish") => void;
@@ -36,31 +45,26 @@ interface LogContextType {
   setSignature: (signature: string) => void;
   setSubtitle: (subtitle: string) => void;
   setSelectedShip: (ship: ShipType) => void;
+  setVoyageNumber: (voyageNumber: string) => void;
   setEvents: (events: string) => void;
   setCrew: (crew: string) => void;
   setGold: (gold: string) => void;
+  setStartgold: (startGold: string) => void;
+  setEndgold: (endGold: string) => void;
   setDoubloons: (doubloons: string) => void;
   setOurTeam: (team: "Athena" | "Reaper") => void;
   setIsModalOpen: (isOpen: boolean) => void;
   setIsCopyModalOpen: (isOpen: boolean) => void;
   setTitleFont: (font: string) => void;
   setBodyFont: (font: string) => void;
-  setActivePageIndex: (index: number) => void;
+  setAncientCoins: React.Dispatch<React.SetStateAction<string>>;
+  setFishCaught: React.Dispatch<React.SetStateAction<string>>;
 
   // Actions
   addNewDive: () => void;
-  updateDive: (
-    index: number,
-    update: Partial<{
-      ourTeam: "Athena" | "Reaper";
-      enemyTeam: "Athena" | "Reaper";
-      outcome: "win" | "loss";
-      notes?: string;
-    }>
-  ) => void;
+  updateDive: (index: number, updates: Partial<DiveEntry>) => void;
   removeDive: (index: number) => void;
   resetState: () => void;
-  loadTestingData: () => void;
   formatList: (text: string) => string[];
   formatDiscordMessage: () => string;
 
@@ -68,6 +72,9 @@ interface LogContextType {
   generatePDF: () => Promise<void>;
   generateImages: () => Promise<void>;
   copyToClipboard: () => void;
+
+  // Testing functions
+  loadTestingData: () => void;
 }
 
 const LogContext = createContext<LogContextType | undefined>(undefined);
@@ -76,11 +83,13 @@ export const LogProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const logState = useLogState();
+  const [activePageIndex, setActivePageIndex] = useState(0);
+  const [pages] = useState<string[]>([]);
   const { generatePDF, generateImages, copyToClipboard } = useExport({
     title: logState.title,
-    activePageIndex: logState.activePageIndex,
-    setActivePageIndex: logState.setActivePageIndex,
-    pages: logState.pages,
+    activePageIndex,
+    setActivePageIndex,
+    pages,
     formatDiscordMessage: logState.formatDiscordMessage,
   });
 

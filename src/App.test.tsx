@@ -14,7 +14,7 @@ describe("App", () => {
 
     // Test for the title
     expect(
-      screen.getByText("SoT USN Voyage Log Generator")
+      screen.getByText("Voyage Logging Tool")
     ).toBeInTheDocument();
 
     // Test for main sections

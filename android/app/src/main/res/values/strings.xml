@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Berserker Logging Tool</string>
+    <string name="title_activity_main">Berserker Logging Tool</string>
+    <string name="package_name">com.berserker.loggingtool</string>
+    <string name="custom_url_scheme">com.berserker.loggingtool</string>
+</resources>

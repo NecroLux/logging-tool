@@ -1061,8 +1061,8 @@ ${body || "Patrol details here"}
 Events:
 ${events || "N/A"}
 &nbsp;
-Gold: ${gold || "0"}
-Doubloons: ${doubloons || "0"}
+&colon;Gold&colon; Gold: ${gold || "0"}
+&colon;doublooncoin&colon; Doubloons: ${doubloons || "0"}
 &nbsp;
 Crew:
 ${crew || "N/A"}
@@ -1070,6 +1070,7 @@ ${crew || "N/A"}
 Signed:
 ${signature || "Your Signature"}
 ${subtitle ? `${subtitle}` : ""}
+&colon;Gullinbursti&colon; Charging Forth, Radiant and Unyielding :Gullinbursti:
 `.trim();
     } else {
       const diveLines = <span class="cstat-no" title="statement not covered" >dives</span>
