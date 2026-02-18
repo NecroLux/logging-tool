@@ -357,7 +357,7 @@ export const LogPreview: React.FC = () => {
           style={{
             width: selectedShip === "Skadi" ? "65%" : "50%",
             height: "auto",
-            opacity: selectedShip === "Skadi" ? 0.35 : 0.20,
+            opacity: selectedShip === "Skadi" ? 0.25 : 0.20,
             zIndex: 0,
           }}
         />
