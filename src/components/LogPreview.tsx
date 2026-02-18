@@ -354,7 +354,12 @@ export const LogPreview: React.FC = () => {
           alt="Ship Logo"
           crossOrigin="anonymous"
           className="absolute inset-0 m-auto"
-          style={{ width: "50%", height: "auto", opacity: 0.20, zIndex: 0 }}
+          style={{
+            width: selectedShip === "Skadi" ? "65%" : "50%",
+            height: "auto",
+            opacity: selectedShip === "Skadi" ? 0.35 : 0.20,
+            zIndex: 0,
+          }}
         />
 
         <div id="writing-area" className={`p-16 h-full flex flex-col relative z-10 ${!isFirstPage ? "pt-16" : ""}`} style={{ paddingBottom: '114px' }}>
